@@ -12,10 +12,15 @@ exports.createProduct = async (req, res)=> {
 }
 
 exports.fetchAllProducts = async (req, res)=> {
-    let query = Product.find({deleted:{$ne:true}});
-    let totalProductsQuery = Product.find({deleted:{$ne:true}});
+    let condition = {}
+    if(!req.query.admin){
+        condition.deleted = {$ne:true}
+    }
+
+    let query = Product.find(condition);
+    let totalProductsQuery = Product.find(condition);
     if(req.query.category ){
-        query = query.find({"category": [req.query.category]});
+        query = query.find({category: req.query.category});
         totalProdutsQuery = totalProductsQuery.find({"category": [req.query.category]});
     }
     if(req.query.brand ){
@@ -51,7 +56,7 @@ exports.fetchProductById = async (req, res)=> {
             res.status(400).json(err);
     }
 };
-//set this route in frontend 7:57:50
+//set this route in frontend 7:57:50 and 8:58:00
 
 exports.updateProduct = async (req, res)=> {
     const {id} = req.params;
