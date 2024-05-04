@@ -12,7 +12,7 @@ import {
   selectStatus,
 } from "./counterSlice"
 
-export default Counter = () => {
+export function Counter() {
   const dispatch = useAppDispatch()
   const count = useAppSelector(selectCount)
   const status = useAppSelector(selectStatus)

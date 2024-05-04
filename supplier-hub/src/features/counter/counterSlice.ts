@@ -3,6 +3,10 @@ import { createAppSlice } from "../../app/createAppSlice"
 import type { AppThunk } from "../../app/store"
 import { fetchCount } from "./counterAPI"
 
+interface ResponseData {
+  data: number;
+}
+
 export interface CounterSliceState {
   value: number
   status: "idle" | "loading" | "failed"
@@ -27,15 +31,15 @@ export const counterSlice = createAppSlice({
       // immutable state based off those changes
       state.value += 1
     }),
-    decrement: create.reducer(state => {
-      state.value -= 1
-    }),
+    // decrement: create.reducer(state => {
+    //   state.value -= 1
+    // }),
     // Use the `PayloadAction` type to declare the contents of `action.payload`
-    incrementByAmount: create.reducer(
-      (state, action: PayloadAction<number>) => {
-        state.value += action.payload
-      },
-    ),
+    // incrementByAmount: create.reducer(
+    //   (state, action: PayloadAction<number>) => {
+    //     state.value += action.payload
+    //   },
+    // ),
     // The function below is called a thunk and allows us to perform async logic. It
     // can be dispatched like a regular action: `dispatch(incrementAsync(10))`. This
     // will call the thunk with the `dispatch` function as the first argument. Async
@@ -44,9 +48,11 @@ export const counterSlice = createAppSlice({
     incrementAsync: create.asyncThunk(
       // 'counter/fetchCount',
       async (amount: number) => {
-        const response = await fetchCount(amount)
+        const response = await fetchCount(amount) as ResponseData;
+        // const response: ResponseData = await fetchCount(amount);
+        // const response = await fetchCount(amount)
         // The value we return becomes the `fulfilled` action payload
-        return response.data
+        return response.data;
       },
       {
         pending: state => {
