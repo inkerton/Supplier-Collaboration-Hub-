@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema }= mongoose;
 const productSchema = new Schema({
-    title: {type: String, required: true},
+    title: {type: String, required: true, unique: true},
     description: {type: String, require: true},
     price: { type: Number, min:[0, 'wrong min price'], max:[10000, 'wrong max price']},
     discountPercentage: { type: Number, min:[1, 'wrong min discount'], max:[99, 'wrong max discount']},
@@ -12,9 +12,16 @@ const productSchema = new Schema({
     thumbnail: {type: String, require: true},
     images: {type: [String], require: true},
     deleted: {type: Boolean, default: false},
-
-
-
 })
+
+const virtual =  productSchema.virtual('id');
+virtual.get(function(){
+    return this._id;
+})
+productSchema.set('toJSON',{
+    virtual: true,
+    versionKey: false,
+    transform: function (doc,ret) { delete ret._id}
+} )
 
 exports.Product = mongoose.model('Product',productSchema)
