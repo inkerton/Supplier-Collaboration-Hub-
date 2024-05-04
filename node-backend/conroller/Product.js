@@ -12,8 +12,8 @@ exports.createProduct = async (req, res)=> {
 }
 
 exports.fetchAllProducts = async (req, res)=> {
-    let query = Product.find({});
-    let totalProductsQuery = Product.find({});
+    let query = Product.find({deleted:{$ne:true}});
+    let totalProductsQuery = Product.find({deleted:{$ne:true}});
     if(req.query.category ){
         query = query.find({"category": [req.query.category]});
         totalProdutsQuery = totalProductsQuery.find({"category": [req.query.category]});
@@ -36,7 +36,7 @@ exports.fetchAllProducts = async (req, res)=> {
     try {
         const doc =  await query.exec();
         res.set('X-Total-count',totalDocs);
-        res.status(200),json(doc)
+        res.status(200),json(doc);
     }catch(err) {
             res.status(400).json(err);
     }
@@ -46,7 +46,7 @@ exports.fetchProductById = async (req, res)=> {
     const {id} = req.params;
     try {
         const product = await Product.findById(id);
-        res.status(200),json(product)
+        res.status(200),json(product);
     }catch(err) {
             res.status(400).json(err);
     }
@@ -57,7 +57,7 @@ exports.updateProduct = async (req, res)=> {
     const {id} = req.params;
     try {
         const product = await Product.findByIdAndUpdate(id, req.body, {new: true});
-        res.status(200),json(product)
+        res.status(200),json(product);
     }catch(err) {
             res.status(400).json(err);
     }
