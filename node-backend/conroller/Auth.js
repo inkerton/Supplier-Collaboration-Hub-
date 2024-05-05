@@ -28,7 +28,7 @@ exports.createUser = async (req, res)=> {
                     httpOnly: true,
                     })
                     .status(201)
-                    .json(token);            }
+                    .json({id:doc.id, role:doc.role});            }
             });
         }
     );
@@ -44,9 +44,14 @@ exports.loginUser = async (req, res)=> {
       httpOnly: true,
     })
     .status(201)
-    .json(req.user.token);};
+    .json(req.user.token);
+};
 
-exports.checkUser = async (req, res) => {
-    res.json({ status: 'success', user: req.user });};
-
+exports.checkAuth = async (req, res) => {
+    if(req.user){
+        res.json(req.user);
+    } else{
+        res.sendStatus(401);
+    }
+};
 // change in frontend 8:16:00 and 8:21:45 and 8:56:00
