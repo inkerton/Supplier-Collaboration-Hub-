@@ -42,7 +42,7 @@ exports.createUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-  const user = req.user;
+  const {user} = req.user;
   res
     .cookie('jwt', user.token, {
       expires: new Date(Date.now() + 3600000),
