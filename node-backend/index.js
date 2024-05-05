@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express');
 const mongoose  = require('mongoose');
 const server = express();
@@ -23,20 +24,57 @@ const ordersRouter = require('./routes/Order');
 const { User } = require('./model/User');
 const { isAuth, sanitizeUser } = require('./services/common');
 const { isAuth, sanitizeUser, cookieExtractor } = require('./services/common');
+const path = require('path');
 
-const SECRET_KEY = 'SECRET_KEY';
+console.log(process.env)
+
+// Webhook
+
+// TODO: we will capture actual order after deploying out server live on public URL
+
+const endpointSecret = process.env.ENDPOINT_SECRET;
+
+server.post('/webhook', express.raw({type: 'application/json'}), (request, response) => {
+  const sig = request.headers['stripe-signature'];
+
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(request.body, sig, endpointSecret);
+  } catch (err) {
+    response.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  // Handle the event
+  switch (event.type) {
+    case 'payment_intent.succeeded':
+      const paymentIntentSucceeded = event.data.object;
+      console.log({paymentIntentSucceeded})
+      // Then define and call a function to handle the event payment_intent.succeeded
+      break;
+    // ... handle other event types
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
+
+  // Return a 200 response to acknowledge receipt of the event
+  response.send();
+});
+
 // JWT options
+
 const opts = {};
 opts.jwtFromRequest = cookieExtractor;
-opts.secretOrKey = SECRET_KEY; // TODO: should not be in code;
+opts.secretOrKey = process.env.JWT_SECRET_KEY; // TODO: should not be in code;
 
 // main.catch(err=> console.log(err));
 //middleware
-server.use(express.static('build'))
+server.use(express.static(path.resolve(__dirname,'build')))
 server.use(cookieParser());
 server.use(
     session({
-      secret: 'keyboard cat',
+      secret: process.env.SESSION_KEY,
       resave: false, // don't save session if unmodified
       saveUninitialized: false, // don't create session until something stored
     })
@@ -62,7 +100,9 @@ passport.use(
   'local',
   new LocalStrategy(
     {usernameField:'email'},
-    async function (email, password, done) {    // by default passport uses username
+    async function (email, password, done) { 
+    // by default passport uses username
+    console.log({email,password})
     try {
         const user = await User.findOne({ email: email });
         console.log(email, password, user);
@@ -79,8 +119,8 @@ passport.use(
           if (!crypto.timingSafeEqual(user.password, hashedPassword)) {
             return done(null, false, { message: 'invalid credentials' });
           }
-          const token = jwt.sign(sanitizeUser(user), SECRET_KEY);
-          done(null, {id:user.id, role:user.role}); // this lines sends to serializer
+          const token = jwt.sign(sanitizeUser(user), process.env.JWT_SECRET_KEY);
+          done(null, {id:user.id, role:user.role, token}); // this lines sends to serializer
         }
       );
     } catch (err) {
@@ -119,17 +159,46 @@ passport.deserializeUser(function (user, cb) {
       return cb(null, user);
     });
   });
+
+  // Payments
+
+
+// This is your test secret API key.
+const stripe = require("stripe")(process.env.STRIPE_SERVER_KEY);
+
+server.post("/create-payment-intent", async (req, res) => {
+  const { totalAmount } = req.body;
+
+  // Create a PaymentIntent with the order amount and currency
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: totalAmount*100, // for decimal compensation
+    currency: "inr",
+    automatic_payment_methods: {
+      enabled: true,
+    },
+  });
+
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+});
+
+
+
+
+
+
   
   main().catch((err) => console.log(err));
   
   async function main() {
-    await mongoose.connect('mongodb://127.0.0.1:27017/ecommerce');
+    await mongoose.connect(process.env.MONGODB_URL);
     console.log('database connected');
   }
 
 server.post('/products',createProduct);
 
 
-server.listen(8080, () => {
+server.listen(process.env.PORT, () => {
     console.log('server started');
   });
