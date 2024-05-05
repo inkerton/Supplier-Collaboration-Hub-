@@ -1,5 +1,5 @@
-// import { Product } = require("../model/Product");
-import { Product } from "../model/Product";
+const { Product } = require("../model/Product");
+// import { Product } from "../model/Product";
 
 exports.createProduct = async (req, res)=> {
     const product = new Product(req.body)
